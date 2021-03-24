@@ -73,6 +73,7 @@ func TestPublicKeyUnsafeHDPath(t *testing.T) {
 		require.NoError(t, tmp.ValidateKey())
 		(&tmp).AssertIsPrivKeyInner()
 
+		// in this test we are chekcking if the generated keys are correct, so no need to wrap into Any.
 		pkBz, err := codec.ProtoMarshalJSON(priv.PubKey(), nil)
 		require.NoError(t, err)
 		require.Equal(t,
@@ -161,6 +162,7 @@ func TestPublicKeyHDPath(t *testing.T) {
 		require.NoError(t, tmp.ValidateKey())
 		(&tmp).AssertIsPrivKeyInner()
 
+		// in this test we are chekcking if the generated keys are correct and stored in a right path, so no need to wrap into Any.
 		pkBz, err := codec.ProtoMarshalJSON(priv.PubKey(), nil)
 		require.NoError(t, err)
 		require.Equal(t,
