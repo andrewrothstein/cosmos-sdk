@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	db "github.com/tendermint/tm-db"
+
 	"github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -54,6 +56,7 @@ func Paginate(
 	key := pageRequest.Key
 	limit := pageRequest.Limit
 	countTotal := pageRequest.CountTotal
+	reverse := pageRequest.Reverse
 
 	if offset > 0 && key != nil {
 		return nil, fmt.Errorf("invalid request, either offset or key is expected, got both")
@@ -67,13 +70,14 @@ func Paginate(
 	}
 
 	if len(key) != 0 {
-		iterator := prefixStore.Iterator(key, nil)
+		iterator := getIterator(prefixStore, key, reverse)
 		defer iterator.Close()
 
 		var count uint64
 		var nextKey []byte
 
 		for ; iterator.Valid(); iterator.Next() {
+
 			if count == limit {
 				nextKey = iterator.Key()
 				break
@@ -94,7 +98,7 @@ func Paginate(
 		}, nil
 	}
 
-	iterator := prefixStore.Iterator(nil, nil)
+	iterator := getIterator(prefixStore, nil, reverse)
 	defer iterator.Close()
 
 	end := offset + limit
@@ -131,4 +135,20 @@ func Paginate(
 	}
 
 	return res, nil
+}
+
+func getIterator(prefixStore types.KVStore, start []byte, reverse bool) db.Iterator {
+	if reverse {
+		var end []byte
+		if start != nil {
+			itr := prefixStore.Iterator(start, nil)
+			defer itr.Close()
+			if itr.Valid() {
+				itr.Next()
+				end = itr.Key()
+			}
+		}
+		return prefixStore.ReverseIterator(nil, end)
+	}
+	return prefixStore.Iterator(start, nil)
 }
